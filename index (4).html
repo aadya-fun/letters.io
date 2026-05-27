@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open When... 💌</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root {
+  --bg: #0f0f13;
+  --surface: #1a1a22;
+  --surface2: #22222e;
+  --ink: #f0eee8;
+  --ink-mid: #a09ea8;
+  --ink-dim: #5a5868;
+  --border: #2e2c3a;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* starfield bg */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.1) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,0.12) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.08) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.1) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* HEADER */
+header {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3.5rem 2rem 0;
+  text-align: center;
+}
+
+.header-eyebrow {
+  font-family: 'Caveat', cursive;
+  font-size: 1.3rem;
+  color: var(--ink-mid);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.03em;
+}
+
+h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: 0.8rem;
+}
+
+h1 .highlight {
+  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-sub {
+  font-family: 'Caveat', cursive;
+  font-size: 1.1rem;
+  color: var(--ink-mid);
+  max-width: 380px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* GRID — horizontal scroll on mobile, 2-col on desktop */
+.grid-wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 3rem auto 2rem;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+/* CARD */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s;
+  overflow: hidden;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-6px) rotate(0.8deg);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+
+.card:hover .card-stripe { opacity: 1; }
+
+.card-stripe {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  border-radius: 20px 0 0 20px;
+}
+
+.card-inner {
+  padding: 1.4rem 1.4rem 1.4rem 1.8rem;
+}
+
+.card-emoji {
+  font-size: 2.2rem;
+  line-height: 1;
+  margin-bottom: 0.9rem;
+  display: block;
+}
+
+.card-label {
+  font-family: 'Caveat', cursive;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+  letter-spacing: 0.01em;
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 1rem;
+}
+
+.card-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-dim);
+  background: var(--surface2);
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+/* MODAL */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,5,8,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+}
+
+@keyframes popIn {
+  from { opacity:0; transform: scale(0.85) translateY(24px); }
+  to { opacity:1; transform: none; }
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  color: var(--ink-mid);
+  transition: background 0.15s, color 0.15s;
+}
+.modal-close:hover { background: #333; color: var(--ink); }
+
+/* PW SCREEN */
+.pw-screen { padding: 2.5rem 2rem; text-align: center; }
+
+.pw-bar {
+  height: 5px;
+  border-radius: 24px 24px 0 0;
+  margin: -2.5rem -2rem 2rem;
+}
+
+.pw-emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.7rem;
+}
+
+.pw-label {
+  font-family: 'Caveat', cursive;
+  font-size: 1rem;
+  color: var(--ink-mid);
+  margin-bottom: 0.2rem;
+}
+
+.pw-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 1.8rem;
+  line-height: 1.2;
+}
+
+.pw-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-align: center;
+  color: var(--ink);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin-bottom: 0.6rem;
+}
+
+.pw-input:focus { border-color: #a78bfa; box-shadow: 0 0 0 3px rgba(167,139,250,0.15); }
+.pw-input.wrong { border-color: #f87171; animation: shake 0.3s ease; }
+
+@keyframes shake {
+  0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}
+}
+
+.pw-error {
+  font-size: 0.8rem;
+  color: #f87171;
+  min-height: 1.1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.pw-btn {
+  width: 100%;
+  padding: 0.9rem;
+  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.pw-btn:hover { opacity: 0.9; }
+.pw-btn:active { transform: scale(0.98); }
+
+/* LETTER SCREEN */
+.letter-screen { display: none; }
+.letter-screen.show { display: block; }
+
+.letter-photo {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 24px 24px 0 0;
+}
+
+.photo-placeholder {
+  width: 100%;
+  height: 140px;
+  background: var(--surface2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: var(--ink-dim);
+  font-size: 0.82rem;
+  border-radius: 24px 24px 0 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.photo-placeholder span:first-child { font-size: 2rem; }
+
+.letter-body {
+  padding: 1.8rem 2rem 2.2rem;
+}
+
+.letter-tag {
+  font-family: 'Caveat', cursive;
+  font-size: 1rem;
+  color: var(--ink-mid);
+  margin-bottom: 1rem;
+}
+
+.letter-note {
+  font-size: 0.96rem;
+  line-height: 1.85;
+  color: var(--ink);
+  white-space: pre-line;
+  font-weight: 400;
+}
+
+.letter-sign {
+  margin-top: 1.5rem;
+  font-family: 'Caveat', cursive;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* FOOTER */
+footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 1.5rem 2rem 2.5rem;
+  font-family: 'Caveat', cursive;
+  font-size: 1rem;
+  color: var(--ink-dim);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow">psst... this is for you 👇</div>
+  <h1>Open When You<br><span class="highlight">Need Me Most</span></h1>
+  <p class="header-sub">Six letters sealed just for you — open the right one at the right time only okay 😤</p>
+</header>
+
+<div class="grid-wrap" id="grid"></div>
+
+<footer>made by your best junior ;) — with zero chill and a lot of love 💛</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <div class="pw-screen" id="pwScreen">
+      <div class="pw-bar" id="pwBar"></div>
+      <span class="pw-emoji" id="pwEmoji"></span>
+      <div class="pw-label" id="pwLabel"></div>
+      <div class="pw-title" id="pwTitle"></div>
+      <input class="pw-input" id="pwInput" type="password" placeholder="enter password..."
+        autocomplete="off" onkeydown="if(event.key==='Enter')tryUnlock()" oninput="clearErr()">
+      <div class="pw-error" id="pwError"></div>
+      <button class="pw-btn" onclick="tryUnlock()">🔓 Open this letter</button>
+    </div>
+
+    <div class="letter-screen" id="letterScreen">
+      <div id="photoSlot"></div>
+      <div class="letter-body">
+        <div class="letter-tag" id="letterTag"></div>
+        <div class="letter-note" id="letterNote"></div>
+        <div class="letter-sign" id="letterSign"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const letters = [
+  {
+    color: "#818cf8",
+    emoji: "🥺",
+    label: "Open when...",
+    title: "You're feeling sad",
+    password: "never",
+    photo: "sad.jpg",
+    note: "Kya hua why are you sad? Is everything okay? Do you want to sit alone or do you want to talk about it? Agar baat karna h toh I am there always. Yes sitting miles away probably in a different time zone as well but I am always there for you.\n\nI have never seen you expressing ye sabh bahut zyada but sometimes it just feels better. So yes please please call me and tell me what you are sad about.\n\nAap bakchodi karte hue hi achhe lagte hoo sad Nai :)",
+    sign: "— always here, always 🤍"
+  },
+  {
+    color: "#fbbf24",
+    emoji: "🎉",
+    label: "Open when...",
+    title: "You're happy!",
+    password: "130402",
+    photo: "happy.jpg",
+    note: "Omgggg Khush Hooke Meri yaad aayi? Well honour is all mine ;)\n\nAnyways, yayyyyyyy yipeeeeee, I am so so so so so happy for you and proud of you always. You've always achieved what you dreamt of and inspired me in the ways no one did. I would have come running to your room and hugged you if you were still in H and me in C, but still I am always in 2nd year and you'll always be in 4th year in my brain 😭\n\nToh chalo bina time calculate kare call karo mujhe fatafattttt because I will definitely call you when I am happy yaa meri shaadi pakki hui toh, lol.",
+    sign: "— your biggest fan, always 🎊"
+  },
+  {
+    color: "#f472b6",
+    emoji: "🫶",
+    label: "Open when...",
+    title: "You miss me",
+    password: "missingyoutoo",
+    photo: "missme.jpg",
+    note: "Awwwww meri yaad aayi? I always thought I miss you more but awww 😂\n\nMai aapki tarah toh bilkul nhi hu joh aapka phone naa uthaaye yaa message na dekhe 😒 toh fatafat se bina time zone dekhe call me. I would love to talk to you as always. Hum baat karenge toh time udd jaayega aur pata bhi nhi chalega I am telling you.\n\nRegardless call me ASAP!\n\nAnd I am pretty sure WhatsApp pe mere messages unread pakkaaa pade hi hoonge. Go and read them 😏",
+    sign: "— missing you too 💕"
+  },
+  {
+    color: "#34d399",
+    emoji: "🥱",
+    label: "Open when...",
+    title: "You're bored",
+    password: "gossip",
+    photo: "bored.jpg",
+    note: "Bored? Haa Haa jaake GOT dekho na 😈 Waise mai bhi probably bore hi hoo rahi hu and I am 1000000% sure mere paas koi naa koi gossip, bakchodi yaa kahani toh hogi hi sunane ke liye 😭\n\nToh bina sochke call me fatafattt. Hum kisi ki bitching karenge, random bakwaas karenge, yaa fir aap mujhe kisi random insaan ki poori lore sunaoge 😭\n\nAur honestly hum dono jab bore hote hai tabhi sabse funny conversations hoti hai.\n\nSo yes stop staring at the wall yaa rewatching random GOT clips and CALL ME ASAP idiot.",
+    sign: "— your boredom solution 😈"
+  },
+  {
+    color: "#fb923c",
+    emoji: "🗣️",
+    label: "Open when...",
+    title: "You need gossip",
+    password: "callASAP",
+    photo: "gossip.jpg",
+    note: "Achaaaaaa toh gossip chahiye aapko 😏 Good. Because mujhe bhi deni hi hoti hai har baar somehow 😭\n\nCall me fatafattt because I am 1000000% sure mere paas koi naa koi fresh gossip, bakchodi, observation yaa unnecessary detail hogi batane ke liye. Aur gossip over text is honestly so boring.\n\nHum kisi ki bitching karenge, kisi ki love life analyse karenge as if hum dono relationship experts hai, yaa fir mai aapko poori story dramatic expressions ke saath sunaungi 😭\n\nAlso I KNOW ye \"2 minute call\" minimum 2 ghante chalega so come mentally prepared 😈",
+    sign: "— your personal news channel 📡"
+  },
+  {
+    color: "#f87171",
+    emoji: "🍺",
+    label: "Open when...",
+    title: "You're bhand",
+    password: "everytime",
+    photo: "bhand.jpg",
+    note: "Bhai bhand hooke inn letters ki yaad kaise aayi aapko bc? 😭 He he anyways remember those bhand texts you did sooooo many times. Aur kitne calls kiye the, videos bheje the when I was in Hyderabad and the Bumble account you made to get entry in club 😭\n\nOhhhhh godddd your bhand stories are just too much honestly. Hoosh me hoo abhi? Samajh rahe hoo ki kya keh rahi hu mai?\n\nMy first semi bhandi experience aapke saath jiska maine aur aapne milke \"Khwab\" dekha tha (Iqlipse Nova reference, stupid 😭)\n\nBhai don't call your ex please please 😭 Haa but mujhe bilkul kar sakte hoo call. Take care and sooo jaoooo.",
+    sign: "— go to sleep!! 😭❤️"
+  }
+];
+
+let active = null;
+
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  letters.forEach((l, i) => {
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.onclick = () => openModal(i);
+    c.style.setProperty('--c', l.color);
+    c.innerHTML = `
+      <div class="card-stripe" style="background:${l.color}"></div>
+      <div class="card-inner">
+        <span class="card-emoji">${l.emoji}</span>
+        <div class="card-label" style="color:${l.color}">${l.label}</div>
+        <div class="card-title">${l.title}</div>
+        <div class="card-lock">🔒 password locked</div>
+      </div>`;
+    grid.appendChild(c);
+  });
+}
+
+function openModal(i) {
+  active = i;
+  const l = letters[i];
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwInput').classList.remove('wrong');
+  document.getElementById('pwError').textContent = '';
+  document.getElementById('pwBar').style.background = `linear-gradient(90deg, ${l.color}, ${l.color}88)`;
+  document.getElementById('pwEmoji').textContent = l.emoji;
+  document.getElementById('pwLabel').textContent = l.label;
+  document.getElementById('pwTitle').textContent = l.title;
+  document.getElementById('pwScreen').style.display = 'block';
+  document.getElementById('letterScreen').classList.remove('show');
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('pwInput').focus(), 300);
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  active = null;
+}
+
+function clearErr() {
+  document.getElementById('pwError').textContent = '';
+  document.getElementById('pwInput').classList.remove('wrong');
+}
+
+function tryUnlock() {
+  const val = document.getElementById('pwInput').value.trim().toLowerCase();
+  const l = letters[active];
+  if (val === l.password.toLowerCase()) {
+    showLetter(l);
+  } else {
+    const inp = document.getElementById('pwInput');
+    inp.classList.add('wrong');
+    document.getElementById('pwError').textContent = 'Nope, try again 😭';
+    setTimeout(() => inp.classList.remove('wrong'), 400);
+    inp.value = '';
+    inp.focus();
+  }
+}
+
+function showLetter(l) {
+  document.getElementById('pwScreen').style.display = 'none';
+  const slot = document.getElementById('photoSlot');
+  slot.innerHTML = l.photo
+    ? `<img class="letter-photo" src="${l.photo}" alt="photo">`
+    : `<div class="photo-placeholder"><span>📷</span><span>photo goes here</span></div>`;
+  document.getElementById('letterTag').textContent = `${l.label} ${l.title}`;
+  document.getElementById('letterNote').textContent = l.note;
+  document.getElementById('letterSign').textContent = l.sign;
+  document.getElementById('letterScreen').classList.add('show');
+  document.getElementById('modal').scrollTop = 0;
+}
+
+document.getElementById('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+buildGrid();
+</script>
+</body>
+</html>
